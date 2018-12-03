@@ -6,7 +6,6 @@ $fabric = [];
 $fabricWidth = 0;
 $fabricHeight = 0;
 $overlapCount = 0;
-$testOverlapCount = 0;
 
 //First step is to loop each line in the input file and get a readable format
 foreach ($values as $key => $line) {
@@ -37,9 +36,9 @@ for($i = 0; $i < $fabricHeight; $i++) {
 
 //Loop every claim
 for($i = 0; $i < count($arrClaims); $i++) {
-    //loop through the weight and width of this claim
-    for($y = 1; $y < $arrClaims[$i]->height; $y++) {
-        for($x = 1; $x < $arrClaims[$i]->width; $x++) {            
+    //loop through the height and width of this claim
+    for($y = 0; $y < $arrClaims[$i]->height; $y++) {
+        for($x = 0; $x < $arrClaims[$i]->width; $x++) {            
             //+1 the counter of this square inch of fabric, using the left ad top margin as an offset
             $fabric[$arrClaims[$i]->margin_top + $y][$arrClaims[$i]->margin_left + $x]++;
             //Count the overlap value (more than 1 in this particular square inch means it's overlapped another claim)
@@ -52,14 +51,6 @@ for($i = 0; $i < count($arrClaims); $i++) {
 }
 
 echo $overlapCount;
-
-for($i = 0; $i < $fabricHeight; $i++) {
-    for($x = 0; $x < $fabricWidth; $x++) {
-        if($fabric[$i][$x]>1)$testOverlapCount++;
-    }
-}
-
-echo '\n' . $testOverlapCount;
 
 //Dumb function needed because apparently PHP can't do this built in
 function get_string_between($string, $start, $end){
