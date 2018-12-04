@@ -28,6 +28,39 @@ guardAudit = values.sort_by do |obj|
   obj['datetime']
 end
 guards = []
+currGuard = {}
+minStart = 0
+minEnd = 59
+mostMinutes = { 'id' => 0, 'minutes' => 0 }
 guardAudit.each do |_item|
-  puts "String includes 'Guard'" if 'Guard'.include? 'Guard'
+  if _item['value'].include? 'Guard'
+    # New guard just started their shift
+    guardId = _item['value'].string_between_markers('#', ' ')
+    if guards.any? { |h| h['id'] == guardId }
+      # Guard already exists so use existing guard hash
+      currGuard = guards.detect { |h| h['id'] == guardId }
+    else
+      # Brand new guard, add a new hash to the guards array
+      currGuard = { 'id' => guardId, 'audit' => [] }
+      guards.push(
+        currGuard
+      )
+    end
+  else
+    # current guard is still working check if he is still asleep
+    currGuard['asleep'] = true if _item['value'].include? 'falls asleep'
+    currGuard['asleep'] = false if _item['value'].include? 'wakes up'
+    # loop each minute
+    $i = 0
+    while $i < minEnd
+      # If the guard is asleep add a counter to the minute
+      if currGuard['asleep']
+        currGuard['audit'][$i] = 0 if currGuard['audit'][$i].nil?
+        currGuard['audit'][$i] += 1
+      end
+      $i += 1
+    end
+  end
 end
+
+puts mostMinutes
