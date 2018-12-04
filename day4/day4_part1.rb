@@ -13,18 +13,21 @@ file = File.open(__dir__ << '/input.txt', 'r')
 values = []
 # loop each line in the file to seperate the time so it can be sorted
 file.each_line do |line|
-  # I seems to have to define this variable here, it errors if I put the Date.parse inside the hash creation?
+  # I seems to have to define this variable here, it errors if I put the Date parsing inside the hash creation?
   dateAsString = line.string_between_markers('[', ']')
-  testDate = Date.parse(dateAsString)
-  testTime = Time.strptime('12/22/2011', '%m/%d/%Y %H:%M:%S')
+  dateTime = Time.strptime(dateAsString, '%Y-%m-%d %H:%M')
   values.push(
-    'datetime' => testTime,
+    'datetime' => dateTime,
     'value' => line.delete("\n").gsub('[' << dateAsString << '] ', '')
   )
 end
 file.close
 
-sortedByTime = values.sort_by do |obj|
+# Sort the values by their time and loop each value
+guardAudit = values.sort_by do |obj|
   obj['datetime']
 end
-puts sortedByTime
+guards = []
+guardAudit.each do |_item|
+  puts "String includes 'Guard'" if 'Guard'.include? 'Guard'
+end
