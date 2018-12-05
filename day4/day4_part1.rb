@@ -32,7 +32,7 @@ guards = []
 currGuard = {}
 minStart = 0
 minEnd = 59
-mostMinutes = { 'id' => 0, 'minutes' => 0 }
+mostMinutes = { 'id' => 0, 'minutes' => 0, 'maxMinute' => 0 }
 guardAudit.each do |_item|
   if _item['value'].include? 'Guard'
     # New guard just started their shift
@@ -40,9 +40,12 @@ guardAudit.each do |_item|
     if guards.any? { |h| h['id'] == guardId }
       # Guard already exists so use existing guard hash
       currGuard = guards.detect { |h| h['id'] == guardId }
+      #Make sure they are awake and at the start of their shift
+      currGuard['lastSleepMinute'] = 0
+      currGuard['asleep'] = false
     else
       # Brand new guard, add a new hash to the guards array
-      currGuard = { 'id' => guardId, 'audit' => [], 'totalMinutesAsleep' => 0 }
+      currGuard = { 'id' => guardId, 'audit' => {}, 'totalMinutesAsleep' => 0 }
       guards.push(
         currGuard
       )
@@ -54,17 +57,36 @@ guardAudit.each do |_item|
     # loop each minute
     $i = 0
     currMin = _item['datestring'].split(//).last(2).join.to_i
-    while $i < minEnd
-      # If the guard is asleep add a counter to the minute
-      if currGuard['asleep'] && $i == currMin
-        currGuard['audit'][$i] = 0 if currGuard['audit'][$i].nil?
-        currGuard['audit'][$i] += 1
-        currGuard['totalMinutesAsleep'] += 1
+    if currGuard['asleep']
+      currGuard['lastSleepMinute'] = currMin
+    end
+    if currGuard['asleep'] == false
+      #Guard has woken up, record all of the minutes asleep from the last sleep time to now
+      $i = currGuard['lastSleepMinute']
+      #puts $i.to_s << ' : ' << currMin.to_s
+      while $i < currMin
+        # If the guard is asleep add a counter to the minute
+        #if currGuard['asleep'] #&& $i == currMin
+          currGuard['audit'][$i] = 0 if currGuard['audit'][$i].nil?
+          currGuard['audit'][$i] += 1
+          currGuard['totalMinutesAsleep'] += 1
+        #end
+        $i += 1
       end
-      $i += 1
     end
   end
 end
 
-puts guards
+#puts guards
+debugAudit = guards.sort_by do |obj|
+  obj['totalMinutesAsleep']
+end
+puts debugAudit
+#Get the guard who was asleep the most
+sleepyGuard = guards.max_by{|k| k['totalMinutesAsleep'] }
+#puts sleepyGuard
+mostMinutes['id'] = sleepyGuard['id'].to_i
+mostMinutes['minutes'] = sleepyGuard['totalMinutesAsleep']
+mostMinutes['maxMinute'] = sleepyGuard['audit'].max_by{ |k,v| v }[0]
 puts mostMinutes
+puts mostMinutes['id'] * mostMinutes['maxMinute']
