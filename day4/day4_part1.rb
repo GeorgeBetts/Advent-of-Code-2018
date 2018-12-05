@@ -18,6 +18,7 @@ file.each_line do |line|
   dateTime = Time.strptime(dateAsString, '%Y-%m-%d %H:%M')
   values.push(
     'datetime' => dateTime,
+    'datestring' => dateAsString,
     'value' => line.delete("\n").gsub('[' << dateAsString << '] ', '')
   )
 end
@@ -41,7 +42,7 @@ guardAudit.each do |_item|
       currGuard = guards.detect { |h| h['id'] == guardId }
     else
       # Brand new guard, add a new hash to the guards array
-      currGuard = { 'id' => guardId, 'audit' => [] }
+      currGuard = { 'id' => guardId, 'audit' => [], 'totalMinutesAsleep' => 0 }
       guards.push(
         currGuard
       )
@@ -52,15 +53,18 @@ guardAudit.each do |_item|
     currGuard['asleep'] = false if _item['value'].include? 'wakes up'
     # loop each minute
     $i = 0
+    currMin = _item['datestring'].split(//).last(2).join.to_i
     while $i < minEnd
       # If the guard is asleep add a counter to the minute
-      if currGuard['asleep']
+      if currGuard['asleep'] && $i == currMin
         currGuard['audit'][$i] = 0 if currGuard['audit'][$i].nil?
         currGuard['audit'][$i] += 1
+        currGuard['totalMinutesAsleep'] += 1
       end
       $i += 1
     end
   end
 end
 
+puts guards
 puts mostMinutes
